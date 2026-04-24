@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Cash Faster | نظام التمويل الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0a0f1e 0%, #0c1222 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
+        .tab-btn {
+            background: rgba(0, 217, 255, 0.15);
+            border: 1px solid #00D9FF;
+            color: #00D9FF;
+            padding: 12px 30px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+        .tab-btn.active, .tab-btn:hover { background: #00D9FF; color: #0a0f1e; border-color: #00D9FF; box-shadow: 0 0 15px rgba(0,217,255,0.4); }
+        .panel { display: none; animation: fade 0.4s ease; background: rgba(15, 20, 40, 0.7); backdrop-filter: blur(8px); border-radius: 28px; padding: 30px; border: 1px solid rgba(0,217,255,0.3); }
+        .panel.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { color: #00D9FF; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .input-field { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #FFD700; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 16px; background: #0c1222; border: 1px solid #2a3a5a; color: white; font-size: 0.95rem; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #00D9FF; box-shadow: 0 0 8px rgba(0,217,255,0.3); }
+        .file-row { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+        .file-label { background: #1e2a3a; padding: 8px 15px; border-radius: 30px; cursor: pointer; font-size: 0.85rem; }
+        button { background: linear-gradient(135deg, #00D9FF, #9D4EDD); border: none; padding: 12px 28px; border-radius: 40px; font-weight: 700; color: white; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,217,255,0.4); }
+        .success-msg { background: rgba(57,255,20,0.2); border: 1px solid #3FFF00; padding: 15px; border-radius: 20px; margin-top: 20px; text-align: center; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; }
+        .status-review { background: #FFA500; color: #000; }
+        .status-accept { background: #3FFF00; color: #000; }
+        .status-reject { background: #FF3366; color: #fff; }
+        .query-result { background: #0f1424; border-radius: 20px; padding: 20px; margin-top: 20px; }
+        .admin-table { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 8px; border-bottom: 1px solid #2a3a5a; text-align: center; vertical-align: middle; }
+        th { background: #00D9FF20; color: #00D9FF; }
+        select.status-select { width: 120px; margin: 0 auto; background: #1a1f30; color: white; border-radius: 30px; padding: 6px; }
+        button.small { padding: 6px 12px; font-size: 0.8rem; margin-top: 5px; }
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-box {
+            background: #1a1f3a;
+            padding: 30px;
+            border-radius: 30px;
+            text-align: center;
+            border: 2px solid #00D9FF;
+            max-width: 350px;
+            width: 90%;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 30px;
+            text-align: center;
+        }
+        @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } .tabs { gap: 8px; } .tab-btn { padding: 8px 18px; font-size: 0.8rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="text-align:center; margin-bottom:20px;"><h1 style="font-size:2rem;"><i class="fas fa-bolt"></i> Cash Faster | التمويل الذكي</h1><p style="color:#ccc;">نظام تسجيل وإدارة طلبات التمويل الشخصي</p></div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="register">📝 تسجيل طلب جديد</button>
+        <button class="tab-btn" data-tab="query">🔍 استعلام عن الطلب</button>
+        <button class="tab-btn" data-tab="admin">👑 لوحة التحكم (إدارة الطلبات)</button>
+    </div>
+
+    <!-- لوحة تسجيل العميل -->
+    <div id="registerPanel" class="panel active">
+        <h2><i class="fas fa-user-plus"></i> استمارة التمويل الشخصي</h2>
+        <form id="loanForm">
+            <div class="form-grid">
+                <div class="input-field"><label>الاسم رباعي كامل *</label><input type="text" id="fullName" required></div>
+                <div class="input-field"><label>رقم البطاقة القومية (14 رقم) *</label><input type="text" id="nationalId" maxlength="14" required></div>
+                <div class="input-field"><label>العنوان بالتفصيل + علامة مميزة</label><input type="text" id="address" required></div>
+                <div class="input-field"><label>الجنس</label><select id="gender"><option>ذكر</option><option>أنثى</option></select></div>
+                <div class="input-field"><label>الحالة الاجتماعية</label><select id="marital"><option>أعزب</option><option>متزوج/ة</option><option>مطلق /ة</option><option>أرمل/ة</option></select></div>
+                <div class="input-field"><label>أحدث شهادة علمية</label><input type="text" id="degree" placeholder="ماجستير / ليسانس / دبلوم / ثانوية"></div>
+                <div class="input-field"><label>مصدر الدخل</label><select id="incomeSource"><option>القطاع الخاص</option><option>القطاع الحكومى</option><option>صاحب مشروع قائم</option><option>مهنى</option></select></div>
+                <div class="input-field"><label>تفاصيل أكثر عن الوظيفة</label><input type="text" id="jobDetails" placeholder="مدير مبيعات, خراط, إلخ"></div>
+                <div class="input-field"><label>معدل الدخل الشهري</label><select id="monthlyIncome"><option>أقل من 5000</option><option>من 5100 إلى 7000</option><option>من 7100 إلى 9000</option><option>من 9100 إلى 12000</option><option>أكثر من 12000</option></select></div>
+                <div class="input-field"><label>رقم واتساب للتواصل</label><input type="tel" id="whatsapp" required></div>
+                <div class="input-field"><label>اسم صفحتك على فيسبوك</label><input type="text" id="facebook"></div>
+                <div class="input-field"><label>نوع المحفظة المستلمة للقرض</label><select id="walletType"><option>فودافون كاش</option><option>اتصالات كاش</option><option>لا يوجد</option></select></div>
+                <div class="input-field" id="vodafoneField"><label>رقم فودافون كاش</label><input type="text" id="vodafoneNum"></div>
+                <div class="input-field" id="etisalatField"><label>رقم اتصالات كاش</label><input type="text" id="etisalatNum"></div>
+                <div class="input-field"><label>الرقم المتاح حاليا (لتفعيل المحفظة)</label><input type="text" id="activeNumber"></div>
+                <div class="input-field"><label>درجة قرابة الضامن</label><select id="guarantorRelation"><option>زوجة</option><option>زوج</option><option>أخ</option><option>أخت</option><option>ابن</option><option>ابنة</option><option>أم</option><option>أب</option></select></div>
+                <div class="input-field"><label>اسم الضامن رباعي</label><input type="text" id="guarantorName" required></div>
+                <div class="input-field"><label>الرقم القومي للضامن</label><input type="text" id="guarantorId" maxlength="14" required></div>
+                <div class="input-field"><label>هل الضامن يعلم بالطلب؟</label><select id="guarantorKnows"><option>نعم يعلم كل شيء</option><option>لا ولا أريد أن يعرف</option></select></div>
+                <div class="input-field"><label>رقم موبايل الضامن</label><input type="tel" id="guarantorPhone" required></div>
+                <div class="input-field"><label>المبلغ المطلوب (ج.م)</label><select id="loanAmountReq">
+                    <option>30,000</option><option>35,000</option><option>40,000</option><option>50,000</option><option>55,000</option>
+                    <option>60,000</option><option>65,000</option><option>70,000</option><option>75,000</option><option>80,000</option>
+                    <option>85,000</option><option>90,000</option><option>100,000</option><option>110,000</option><option>120,000</option>
+                    <option>125,000</option><option>130,000</option><option>140,000</option><option>150,000</option><option>155,000</option>
+                    <option>160,000</option><option>175,000</option><option>180,000</option><option>185,000</option><option>190,000</option>
+                    <option>195,000</option><option>200,000</option>
+                </select></div>
+                <div class="input-field"><label>سبب التمويل</label><textarea id="reason" rows="2"></textarea></div>
+                <div class="input-field"><label>هل لديك قروض أخرى؟</label><select id="otherLoans"><option>لا</option><option>نعم</option></select></div>
+            </div>
+            <div style="margin-top:20px;"><h3><i class="fas fa-images"></i> المستندات المطلوبة</h3>
+                <div class="file-row"><span class="file-label">صورة البطاقة الأمامية للضامن</span><input type="file" id="imgGuarFront" accept="image/*"></div>
+                <div class="file-row"><span class="file-label">صورة البطاقة الخلفية للضامن</span><input type="file" id="imgGuarBack" accept="image/*"></div>
+                <div class="file-row"><span class="file-label">صورة سيلفي مع البطاقة للعميل</span><input type="file" id="imgSelfie" accept="image/*"></div>
+                <div class="file-row"><span class="file-label">صورة البطاقة الأمامية للعميل</span><input type="file" id="imgClientFront" accept="image/*"></div>
+                <div class="file-row"><span class="file-label">صورة البطاقة الخلفية للعميل</span><input type="file" id="imgClientBack" accept="image/*"></div>
+            </div>
+            <button type="submit" style="margin-top:30px; width:100%;"><i class="fas fa-paper-plane"></i> إرسال الطلب</button>
+            <div id="registerMsg"></div>
+        </form>
+    </div>
+
+    <!-- لوحة الاستعلام -->
+    <div id="queryPanel" class="panel">
+        <h2><i class="fas fa-search"></i> استعلام عن حالة الطلب</h2>
+        <div style="max-width:400px;"><input type="text" id="queryNum" placeholder="أدخل رقم الطلب الخاص بك"><button id="doQueryBtn" style="margin-top:10px;">استعلام</button></div>
+        <div id="queryResult"></div>
+    </div>
+
+    <!-- لوحة المشرف (ستظهر بعد كلمة المرور) -->
+    <div id="adminPanel" class="panel">
+        <h2><i class="fas fa-chalkboard-user"></i> إدارة الطلبات (المشرف فقط)</h2>
+        <div id="adminControls" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="sendReportBtn"><i class="fas fa-envelope"></i> إرسال التقرير (Excel) إلى البريد الإلكتروني</button>
+            <button id="refreshAdminBtn"><i class="fas fa-refresh"></i> تحديث الجدول</button>
+        </div>
+        <div id="adminTableContainer" class="admin-table"></div>
+        <p style="margin-top:15px; color:#aaa;"><i class="fas fa-lock"></i> يمكنك تغيير حالة كل طلب ثم الضغط على "حفظ التغييرات".</p>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ========== بيانات EmailJS المدمجة ==========
+        const EMAILJS_CONFIG = {
+            serviceId: 'service_zoiqvwn',
+            templateId: 'template_w0vbf2i',
+            publicKey: 'ruj-0ad-265b40WKo',
+            toEmail: 'badr31940@gmail.com'
+        };
+        
+        // كلمة مرور لوحة التحكم
+        const ADMIN_PASSWORD = 'MiDo@2025##';
+        
+        // قاعدة البيانات
+        let applications = JSON.parse(localStorage.getItem('cashFasterApps')) || [];
+        function saveToLocal() { localStorage.setItem('cashFasterApps', JSON.stringify(applications)); }
+        function generateAppNumber() { return 'CF-' + Date.now() + '-' + Math.floor(Math.random() * 10000); }
+        
+        // تحويل الملفات إلى base64
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1] || '');
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function getWalletNumber() {
+            let type = document.getElementById('walletType').value;
+            if (type === 'فودافون كاش') return document.getElementById('vodafoneNum').value;
+            if (type === 'اتصالات كاش') return document.getElementById('etisalatNum').value;
+            return 'غير مسجل';
+        }
+        
+        // إرسال الطلب
+        document.getElementById('loanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const registerMsg = document.getElementById('registerMsg');
+            registerMsg.innerHTML = '<div class="success-msg"><i class="fas fa-spinner fa-spin"></i> جاري حفظ الطلب...</div>';
+            try {
+                const imgGuarFront = document.getElementById('imgGuarFront').files[0];
+                const imgGuarBack = document.getElementById('imgGuarBack').files[0];
+                const imgSelfie = document.getElementById('imgSelfie').files[0];
+                const imgClientFront = document.getElementById('imgClientFront').files[0];
+                const imgClientBack = document.getElementById('imgClientBack').files[0];
+                
+                const base64Images = {
+                    guarFront: imgGuarFront ? await readFileAsBase64(imgGuarFront) : '',
+                    guarBack: imgGuarBack ? await readFileAsBase64(imgGuarBack) : '',
+                    selfie: imgSelfie ? await readFileAsBase64(imgSelfie) : '',
+                    clientFront: imgClientFront ? await readFileAsBase64(imgClientFront) : '',
+                    clientBack: imgClientBack ? await readFileAsBase64(imgClientBack) : ''
+                };
+                
+                const newApp = {
+                    appNumber: generateAppNumber(),
+                    timestamp: new Date().toISOString(),
+                    fullName: document.getElementById('fullName').value,
+                    nationalId: document.getElementById('nationalId').value,
+                    address: document.getElementById('address').value,
+                    gender: document.getElementById('gender').value,
+                    marital: document.getElementById('marital').value,
+                    degree: document.getElementById('degree').value,
+                    incomeSource: document.getElementById('incomeSource').value,
+                    jobDetails: document.getElementById('jobDetails').value,
+                    monthlyIncome: document.getElementById('monthlyIncome').value,
+                    whatsapp: document.getElementById('whatsapp').value,
+                    facebook: document.getElementById('facebook').value,
+                    walletType: document.getElementById('walletType').value,
+                    walletNumber: getWalletNumber(),
+                    activeNumber: document.getElementById('activeNumber').value,
+                    guarantorRelation: document.getElementById('guarantorRelation').value,
+                    guarantorName: document.getElementById('guarantorName').value,
+                    guarantorId: document.getElementById('guarantorId').value,
+                    guarantorKnows: document.getElementById('guarantorKnows').value,
+                    guarantorPhone: document.getElementById('guarantorPhone').value,
+                    loanAmount: document.getElementById('loanAmountReq').value,
+                    reason: document.getElementById('reason').value,
+                    otherLoans: document.getElementById('otherLoans').value,
+                    images: base64Images,
+                    status: 'مراجعة'
+                };
+                applications.unshift(newApp);
+                saveToLocal();
+                document.getElementById('loanForm').reset();
+                registerMsg.innerHTML = `<div class="success-msg"><i class="fas fa-check-circle"></i> تم تسجيل طلبك بنجاح! رقم طلبك: <strong>${newApp.appNumber}</strong><br>يمكنك استخدام هذا الرقم للاستعلام لاحقاً.</div>`;
+                setTimeout(() => { registerMsg.innerHTML = ''; }, 8000);
+            } catch(err) { console.error(err); registerMsg.innerHTML = '<div class="success-msg" style="background:#FF336620;">حدث خطأ، حاول مرة أخرى.</div>'; }
+        });
+        
+        // الاستعلام
+        document.getElementById('doQueryBtn').addEventListener('click', () => {
+            const queryNum = document.getElementById('queryNum').value.trim();
+            const resultDiv = document.getElementById('queryResult');
+            if (!queryNum) { resultDiv.innerHTML = '<div class="query-result">الرجاء إدخال رقم الطلب.</div>'; return; }
+            const app = applications.find(a => a.appNumber === queryNum);
+            if (!app) { resultDiv.innerHTML = '<div class="query-result">⚠️ لا يوجد طلب بهذا الرقم.</div>'; return; }
+            let statusClass = '';
+            if (app.status === 'مراجعة') statusClass = 'status-review';
+            else if (app.status === 'قبول') statusClass = 'status-accept';
+            else statusClass = 'status-reject';
+            resultDiv.innerHTML = `<div class="query-result">
+                <h3>بيانات الطلب</h3>
+                <p><strong>الاسم:</strong> ${app.fullName}</p>
+                <p><strong>المبلغ المطلوب:</strong> ${app.loanAmount} ج.م</p>
+                <p><strong>حالة الطلب:</strong> <span class="status-badge ${statusClass}">${app.status}</span></p>
+                <p><strong>تاريخ التسجيل:</strong> ${new Date(app.timestamp).toLocaleString('ar-EG')}</p>
+            </div>`;
+        });
+        
+        // عرض جدول المشرف
+        function renderAdminTable() {
+            const container = document.getElementById('adminTableContainer');
+            if (!applications.length) { container.innerHTML = '<p style="color:#ccc;">لا توجد طلبات مسجلة بعد.</p>'; return; }
+            let html = '</table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>البطاقة</th><th>المبلغ</th><th>المحفظة</th><th>الضامن</th><th>الحالة</th><th>تغيير الحالة</th></tr></thead><tbody>';
+            applications.forEach((app, idx) => {
+                html += `<tr>
+                    <td>${app.appNumber}</td>
+                    <td>${app.fullName}</td>
+                    <td>${app.nationalId}</td>
+                    <td>${app.loanAmount}</td>
+                    <td>${app.walletType} - ${app.walletNumber}</td>
+                    <td>${app.guarantorName}</td>
+                    <td><span class="status-badge ${app.status === 'مراجعة' ? 'status-review' : (app.status === 'قبول' ? 'status-accept' : 'status-reject')}">${app.status}</span></td>
+                    <td><select class="status-select" data-idx="${idx}">
+                        <option value="مراجعة" ${app.status === 'مراجعة' ? 'selected' : ''}>مراجعة</option>
+                        <option value="قبول" ${app.status === 'قبول' ? 'selected' : ''}>قبول</option>
+                        <option value="رفض" ${app.status === 'رفض' ? 'selected' : ''}>رفض</option>
+                    </select></td>
+                </tr>`;
+            });
+            html += '</tbody></table><button id="saveStatusChangesBtn" style="margin-top:20px;"><i class="fas fa-save"></i> حفظ التغييرات</button>';
+            container.innerHTML = html;
+            document.getElementById('saveStatusChangesBtn')?.addEventListener('click', () => {
+                const selects = document.querySelectorAll('.status-select');
+                selects.forEach(select => {
+                    const idx = parseInt(select.dataset.idx);
+                    if (!isNaN(idx) && applications[idx]) applications[idx].status = select.value;
+                });
+                saveToLocal();
+                renderAdminTable();
+                alert('تم تحديث حالات الطلبات بنجاح.');
+            });
+        }
+        
+        // إرسال التقرير عبر EmailJS بالبيانات المدمجة
+        async function sendExcelReport() {
+            emailjs.init(EMAILJS_CONFIG.publicKey);
+            const exportData = applications.map(app => ({
+                'رقم الطلب': app.appNumber,
+                'اسم العميل': app.fullName,
+                'الرقم القومي': app.nationalId,
+                'العنوان': app.address,
+                'الجنس': app.gender,
+                'الحالة الاجتماعية': app.marital,
+                'الشهادة': app.degree,
+                'مصدر الدخل': app.incomeSource,
+                'تفاصيل الوظيفة': app.jobDetails,
+                'الدخل الشهري': app.monthlyIncome,
+                'واتساب': app.whatsapp,
+                'فيسبوك': app.facebook,
+                'نوع المحفظة': app.walletType,
+                'رقم المحفظة': app.walletNumber,
+                'الرقم النشط': app.activeNumber,
+                'درجة قرابة الضامن': app.guarantorRelation,
+                'اسم الضامن': app.guarantorName,
+                'رقم الضامن': app.guarantorId,
+                'هاتف الضامن': app.guarantorPhone,
+                'علم الضامن': app.guarantorKnows,
+                'المبلغ المطلوب': app.loanAmount,
+                'سبب التمويل': app.reason,
+                'قروض أخرى': app.otherLoans,
+                'حالة الطلب': app.status,
+                'تاريخ التسجيل': app.timestamp
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'طلبات_كاش_فاستر');
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const file = new File([excelBuffer], `طلبات_${new Date().toISOString().slice(0,19)}.xlsx`, { type: 'application/octet-stream' });
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result.split(',')[1];
+                const templateParams = {
+                    to_email: EMAILJS_CONFIG.toEmail,
+                    currentDate: new Date().toLocaleString('ar-EG'),
+                    count: applications.length,
+                    attachment: base64,
+                    filename: `طلبات_${Date.now()}.xlsx`
+                };
+                try {
+                    await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, templateParams);
+                    alert('✅ تم إرسال التقرير إلى البريد الإلكتروني بنجاح!');
+                } catch(err) { console.error(err); alert('❌ فشل الإرسال. تأكد من بيانات EmailJS.'); }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // حماية لوحة التحكم بكلمة مرور
+        let adminUnlocked = false;
+        function showPasswordPrompt() {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'password-overlay';
+                overlay.innerHTML = `
+                    <div class="password-box">
+                        <i class="fas fa-lock" style="font-size: 40px; color:#00D9FF;"></i>
+                        <h3>إدارة الطلبات</h3>
+                        <p>أدخل كلمة المرور للمشرف</p>
+                        <input type="password" id="adminPasswordInput" placeholder="كلمة المرور">
+                        <button id="submitPasswordBtn">دخول</button>
+                        <button id="cancelPasswordBtn" style="background:#555;">إلغاء</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                const input = overlay.querySelector('#adminPasswordInput');
+                const submitBtn = overlay.querySelector('#submitPasswordBtn');
+                const cancelBtn = overlay.querySelector('#cancelPasswordBtn');
+                const checkPass = () => {
+                    if (input.value === ADMIN_PASSWORD) {
+                        overlay.remove();
+                        resolve(true);
+                    } else {
+                        alert('كلمة المرور غير صحيحة');
+                        input.value = '';
+                    }
+                };
+                submitBtn.onclick = checkPass;
+                cancelBtn.onclick = () => { overlay.remove(); resolve(false); };
+                input.onkeypress = (e) => { if (e.key === 'Enter') checkPass(); };
+                input.focus();
+            });
+        }
+        
+        // التبديل بين التبويبات مع حماية تبويب المشرف
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panels = {
+            register: document.getElementById('registerPanel'),
+            query: document.getElementById('queryPanel'),
+            admin: document.getElementById('adminPanel')
+        };
+        
+        async function switchTab(tabId) {
+            if (tabId === 'admin' && !adminUnlocked) {
+                const allowed = await showPasswordPrompt();
+                if (!allowed) {
+                    // إعادة التبويب النشط إلى ما كان عليه
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab) return;
+                    else { document.querySelector('[data-tab="register"]').classList.add('active'); panels.register.classList.add('active'); }
+                    return;
+                }
+                adminUnlocked = true;
+            }
+            Object.values(panels).forEach(p => p.classList.remove('active'));
+            panels[tabId].classList.add('active');
+            tabs.forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            if (tabId === 'admin') renderAdminTable();
+        }
+        
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                switchTab(tabId);
+            });
+        });
+        
+        // أحداث الأزرار داخل لوحة المشرف (تضاف بعد التصيير)
+        document.getElementById('sendReportBtn')?.addEventListener('click', sendExcelReport);
+        document.getElementById('refreshAdminBtn')?.addEventListener('click', () => { if (adminUnlocked) renderAdminTable(); });
+        
+        // إظهار/إخفاء حقول المحفظة
+        function toggleWalletFields() {
+            const type = document.getElementById('walletType').value;
+            document.getElementById('vodafoneField').style.display = type === 'فودافون كاش' ? 'block' : 'none';
+            document.getElementById('etisalatField').style.display = type === 'اتصالات كاش' ? 'block' : 'none';
+        }
+        document.getElementById('walletType').addEventListener('change', toggleWalletFields);
+        toggleWalletFields();
+    })();
+</script>
+</body>
+</html>
